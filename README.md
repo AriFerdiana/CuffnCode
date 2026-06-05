@@ -55,6 +55,22 @@ We will use STM32F411CE (the black pill) as our digital processor.
 | <img src="./images/prototype1.png" width="250"> | <img src="./images/prototype2.png" width="330"> |
 | ----------------------------------------- | ----------------------------------------- |
 
+## Advanced Distributed DSP Simulation (Web Dashboard)
+
+Sebagai bagian dari tugas mata kuliah **Komputasi Paralel (IFB 206)**, proyek ini telah diekspansi dengan sebuah Simulator Web interaktif berbasis *Data Parallelism*. Simulator ini mendemonstrasikan bagaimana komputasi beban berat (seperti filter sinyal digital untuk membersihkan *hum* 50Hz) dapat didistribusikan melintasi beberapa *thread* prosesor menggunakan teknologi **Web Workers** di *browser*.
+
+**🔗 Live Demo:** [https://AriFerdiana.github.io/CuffnCode/](https://AriFerdiana.github.io/CuffnCode/)
+
+### Fitur Utama Simulasi:
+- **Map-Reduce Architecture:** Sinyal mentah berukuran masif (1.000.000 sampel) dibagi (*chunking*) dan didistribusikan ke 4 buah Node Web Workers independen yang berjalan di latar belakang tanpa memblokir UI utama.
+- **Worker CPU Telemetry:** Dasbor dilengkapi dengan pemantauan metrik CPU *real-time* untuk setiap *thread* pekerja, menyimulasikan beban komputasi fisik dari algoritma *IIR Notch Filter* dan *Moving Average* (hingga ribuan iterasi per sampel).
+- **Frequency Domain (FFT) Spectrum:** Visualisasi tingkat lanjut yang memetakan sinyal dari domain waktu (Time Domain) ke domain frekuensi. Ini secara visual membuktikan hilangnya lonjakan *noise* (spike) pada 50Hz setelah proses *filtering* terdistribusi selesai.
+- **Speedup & Efficiency Benchmarking:** Menampilkan perbandingan estimasi waktu eksekusi sekuensial (single-thread) berbanding lurus dengan eksekusi paralel (multi-thread) yang jauh lebih singkat.
+
+*Dikembangkan oleh: Ari Ferdiana (152024002)*
+
+---
+
 ## Safety & Notes
 
 - The MPS20N0040D is fragile—avoid over-pressure.

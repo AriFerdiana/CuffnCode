@@ -1,34 +1,73 @@
-# CuffnCode - Web Based Host Simulation
+<p align="center">
+  <img src="./images/cuffncode.png" width="200">
+</p>
 
-![Web Simulation Screenshot](https://via.placeholder.com/800x400.png?text=Web+Simulation+Screenshot)
+<h4 align="center">This project is funded by IFAC Activity Fund (July 2025 to June 2026)</h4>
 
-Repositori ini adalah _fork_ dari proyek hardware pengukur tekanan darah [CuffnCode](https://github.com/Student-Embedded-Control-and-AI-Fest/CuffnCode). Proyek ini dimodifikasi untuk Evaluasi 3 mata kuliah **IFB 206 Komputasi Paralel** di ITENAS oleh:
-- **Nama:** Ari Ferdiana
-- **NRP:** 152024002
+__CuffnCode__ is a retrofitted blood pressure measurement system for teaching and research. In the long term, it aims to become an overinstrumented platform for developing and testing signal processing and control algorithms.
 
-## Demo & Dokumentasi
-Silakan buka tautan GitHub Pages berikut untuk melihat dokumentasi lengkap dan mencoba **Simulasi Komputasi Paralel** secara langsung di browser Anda:
+## Retrofitted pump system
 
-👉 **[Jalankan Web Simulation](https://AriFerdiana.github.io/CuffnCode/)**
+<img src="./images/complete_device.png" width="600"> 
 
-## Latar Belakang (Komputasi Paralel)
-Proyek hardware aslinya memproses sinyal sensor pada mikrokontroler. Jika kita memindahkan beban pemrosesan *Digital Signal Processing* (DSP) seperti *Notch Filter* untuk menghilangkan dengung listrik (Hum 50Hz) ke sisi komputer (Host), hal ini akan membutuhkan tenaga komputasi yang lumayan besar untuk menangani ribuan sampel dalam waktu cepat (Real-time).
+## Analog Front End Design
+A reproducible, low-noise analog front end for millivolt bridge sensors (e.g., MPS20N0040D, typically used for __hobbyist__ sphygmomanometer), using AD620 instrumentation amplifier and TLC2272 level shift. This analog front end should also work for other millivolt instruments.
 
-Solusinya adalah menggunakan **Data Parallelism** pada sistem terdistribusi/multi-core.
 
-### Implementasi Web Workers
-Ketimbang menggunakan Python (seperti implementasi umum), saya menggunakan **JavaScript Web Workers** untuk mensimulasikan pemrosesan ini secara langsung di antarmuka web.
+### TINA-TI
 
-1. **Main Thread (UI):** Menghasilkan data sinyal palsu dengan noise secara *real-time* dan menggambar grafik.
-2. **Pekerja Latar Belakang (Workers):** Memotong data sinyal (misalnya 100.000 sampel) menjadi beberapa bagian, dan membagikannya ke beberapa thread terpisah (Web Workers). Masing-masing pekerja akan melakukan filtering berat (simulasi algoritma kompleks).
-3. **Hasil:** Terbukti melalui halaman simulasi bahwa **Eksekusi Paralel (Multi-Thread)** jauh lebih cepat dalam menyelesaikan _batch_ sinyal dibandingkan **Eksekusi Sekuensial (Single-Thread)**.
+AC simulation with TINA-TI:
 
-## Cara Menjalankan Lokal
-Karena ini murni HTML/JS/CSS statis, tidak perlu menginstal Node.js atau Python.
-1. _Clone_ repositori ini.
-2. Karena alasan keamanan browser (CORS policy pada file `worker.js`), Anda tidak bisa langsung mengklik ganda `index.html`. Anda perlu menjalankan lokal server sederhana.
-3. Menggunakan Python (jika tersedia):
-   ```bash
-   python -m http.server 8000
-   ```
-4. Buka `http://localhost:8000` di browser Anda.
+<img src="./images/AFE.png" width="600"> 
+
+<img src="./images/tina-ac-diag.jpg" width="500"> 
+
+Instrumentation amplifier gain:
+
+$$ G = 1 + \frac{49.4\text{k}\Omega}{R_g} = 1 + \frac{49.4\text{k}\Omega}{470} \approx 105$$
+
+TLC2272 offset:
+
+$$ \frac{56 \text{k}}{47\text{k} + 56 \text{k}} \times 3.3 V \approx 1.5 V$$
+
+
+
+### MPS20N0040D
+The MPS20N0040D is a millivolt-level bridge (≈50–100 mV full-scale; 4–6 kΩ)
+
+| <img src="./images/mps20n0040d_1.png" width="300"> | <img src="./images/mps20n0040d_2.png" width="300"> |
+| ----------------------------------------- | ----------------------------------------- |
+
+### TLC2272 (Dual, Low-Noise, Rail-To-Rail Operational Amplifier)
+This will be used to offset the instrumentation amplifier, giving headroom for possible undershoot or for signal that goes both ways (positive and negative).
+
+<img src="./images/tlc2272.png" width="300"> 
+
+### AD620
+This is the instrumentation amplifier that is relatively cheap and widely available in Indonesian market.
+
+| <img src="./images/ad620_1.png" width="150"> | <img src="./images/ad620_2.png" width="150"> |
+| ----------------------------------------- | ----------------------------------------- |
+
+## Digital Controller
+We will use STM32F411CE (the black pill) as our digital processor.
+
+| <img src="./images/prototype1.png" width="250"> | <img src="./images/prototype2.png" width="330"> |
+| ----------------------------------------- | ----------------------------------------- |
+
+## Safety & Notes
+
+- The MPS20N0040D is fragile—avoid over-pressure.
+- If powering from USB, beware ground noise from the host PC. A ferrite on the USB cable can help.
+
+## Next-to-Do
+- 50/60 Hz notch filter (hum killer).
+- PCB layouting.
+- Performance evaluations.
+
+## Credits
+
+- Instrumentation amplifier intro: https://www.youtube.com/watch?v=O0-iczIq1aU
+- INA333 review with AD620 suggestion: https://blog.robertelder.org/cjmcu-333-ina-333-instrumentation-amplifier/
+- A Designer’s Guide to Instrumentation Amplifiers (3rd Edition) https://www.analog.com/media/en/training-seminars/design-handbooks/designers-guide-instrument-amps-complete.pdf
+

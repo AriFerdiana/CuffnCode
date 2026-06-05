@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CuffnCode Demo - IFB 206 (Ari Ferdiana)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <div class="title-group">
+            <span class="logo-text">CuffnCode</span>
+            <span class="separator">—</span>
+            <span class="demo-text">Advanced Distributed DSP Simulation</span>
+            <span class="separator">·</span>
+            <span class="author-text">Ari Ferdiana (152024002)</span>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="btn-group">
+            <button id="btnPlay" class="btn btn-play">▶ Eksekusi Pipeline (Multi-Thread)</button>
+            <button id="btnReset" class="btn btn-reset">↺ Reset Memory</button>
+        </div>
+        <div class="toolbar-settings">
+            <label>DSP Algorithm:</label>
+            <select id="algoSelect">
+                <option value="notch">IIR Notch Filter (50Hz) + MA</option>
+                <option value="fir">FIR Lowpass Filter (Heavy)</option>
+            </select>
+        </div>
+        <div class="progress-container">
+            <div class="progress-labels">
+                <span id="progressText">System Idle</span>
+                <span id="statusText" class="status-done"></span>
+            </div>
+            <div class="progress-track">
+                <div id="progressBar" class="progress-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-layout">
+        <!-- Left Column -->
+        <aside class="left-col">
+            <!-- Block Diagram -->
+            <div class="panel">
+                <div class="panel-header">Topologi Node Terdistribusi</div>
+                <div class="panel-content diagram-content">
+                    <div class="hardware-diagram">
+                        <div class="diag-row">
+                            <div id="block-manset" class="diag-block">Manset<br><small>Hardware</small></div>
+                        </div>
+                        <div class="diag-arrow">↓</div>
+                        <div class="diag-row">
+                            <div id="block-sensor" class="diag-block active">Sensor Node<br><small>ADC Stream</small></div>
+                            <div class="diag-arrow">→</div>
+                            <div id="block-ad620" class="diag-block active">Amplifier<br><small>AD620/TLC</small></div>
+                            <div class="diag-arrow">→</div>
+                            <div id="block-stm32" class="diag-block active">STM32 MCU<br><small>Data Packet</small></div>
+                        </div>
+                        <div class="diag-arrow" style="text-align: right; margin-right: 30px;">↓</div>
+                        <div class="diag-row" style="justify-content: flex-end;">
+                            <div id="block-host" class="diag-block active highlight">Web Host (Browser)<br><small>Map-Reduce Framework</small></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Worker Telemetry -->
+            <div class="panel">
+                <div class="panel-header accent">Worker CPU Telemetry</div>
+                <div class="panel-content telemetry-content" id="workerTelemetry">
+                    <!-- Injected via JS -->
+                    <div style="color:var(--text-muted); font-size: 11px; text-align:center;">Menunggu inisialisasi...</div>
+                </div>
+            </div>
+
+            <!-- Terminal Log -->
+            <div class="panel log-panel">
+                <div class="panel-header">Console Output</div>
+                <div id="terminalLog" class="terminal-content">
+                    <div>[SYS] Booting Distributed Framework...</div>
+                    <div>[SYS] Available Logical Cores: 4</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Column -->
+        <main class="right-col">
+            <div class="panel full-height">
+                <div class="panel-header blue">Analisis Spektral & Time Domain (Data Parallelism)</div>
+                <div class="panel-content metrics-content">
+                    
+                    <!-- Metrics Table -->
+                    <table class="metrics-table">
+                        <thead>
+                            <tr>
+                                <th>Analisis Sinyal (Real-time)</th>
+                                <th>Pre-Filter (Thread-0)</th>
+                                <th>Post-Filter (Merge Data)</th>
+                                <th>Efisiensi (Speedup)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Power Spectral Density (50Hz)</td>
+                                <td id="tblHumBef">--</td>
+                                <td id="tblHumAft">--</td>
+                                <td id="tblHumDiff" class="text-green">--</td>
+                            </tr>
+                            <tr>
+                                <td>Signal-to-Noise Ratio (SNR)</td>
+                                <td id="tblNoiseBef">--</td>
+                                <td id="tblNoiseAft">--</td>
+                                <td id="tblNoiseDiff" class="text-green">--</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: right; color: var(--text-muted); font-size: 10px;">Execution Time (Sequential):</td>
+                                <td id="valSeqTime" style="color: var(--color-warning);">Est. 2800 ms</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="text-align: right; color: var(--text-muted); font-size: 10px;">Execution Time (Parallel):</td>
+                                <td id="valTime" style="color: var(--color-success); font-weight: bold;">-- ms</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Charts Area -->
+                    <div class="charts-grid">
+                        <div class="chart-box">
+                            <div class="chart-title">Time Domain: Sinyal Akuisisi Mentah (Raw Signal)</div>
+                            <div class="canvas-wrapper"><canvas id="chartRaw"></canvas></div>
+                        </div>
+                        <div class="chart-box">
+                            <div class="chart-title">Time Domain: Hasil Filtering Terdistribusi</div>
+                            <div class="canvas-wrapper"><canvas id="chartFiltered"></canvas></div>
+                        </div>
+                        <div class="chart-box" style="flex-grow: 1.5;">
+                            <div class="chart-title">Frequency Domain: Analisis Spektrum (FFT Simulation)</div>
+                            <div class="canvas-wrapper"><canvas id="chartFFT"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
